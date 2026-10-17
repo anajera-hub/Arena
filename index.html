@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Arena"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#140d27"><link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjQxNzQzIi8+PGNpcmNsZSBjeD0iNDQiIGN5PSIyMiIgcj0iMTAiIGZpbGw9IiNmZjlhNGQiLz48cmVjdCB4PSIwIiB5PSI0MCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZWU5ZjViIi8+PHJlY3QgeD0iMTQiIHk9IjMwIiB3aWR0aD0iMjYiIGhlaWdodD0iMTAiIGZpbGw9IiNmZmNmNWEiLz48cmVjdCB4PSIxMCIgeT0iNDAiIHdpZHRoPSIzNCIgaGVpZ2h0PSI4IiBmaWxsPSIjMTQwZDI3Ii8+PC9zdmc+"><link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjQxNzQzIi8+PGNpcmNsZSBjeD0iNDQiIGN5PSIyMiIgcj0iMTAiIGZpbGw9IiNmZjlhNGQiLz48cmVjdCB4PSIwIiB5PSI0MCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZWU5ZjViIi8+PHJlY3QgeD0iMTQiIHk9IjMwIiB3aWR0aD0iMjYiIGhlaWdodD0iMTAiIGZpbGw9IiNmZmNmNWEiLz48cmVjdCB4PSIxMCIgeT0iNDAiIHdpZHRoPSIzNCIgaGVpZ2h0PSI4IiBmaWxsPSIjMTQwZDI3Ii8+PC9zdmc+"><style>[hidden]{display:none!important}html,body{margin:0;background:#140d27}</style><title>Arena al Ocaso</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;600&display=swap">
@@ -16,7 +16,8 @@
 html,body{height:100%}
 body{
   margin:0;background:var(--ink);color:var(--text);font-family:var(--fp);
-  padding-block:6px;
+  padding-top:max(6px,env(safe-area-inset-top,0px));
+  padding-bottom:max(6px,env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
   overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none;
@@ -1539,7 +1540,7 @@ function renderMenu(){
   ({shop:renderShop,con:renderCon,zon:renderZon,set:renderSet})[tab]();
 }
 function openMenu(){paused=true;K.l=K.r=K.op=K.cl=K.jx=K.jy=0;wipeArm=0;renderMenu();sheet.hidden=false}
-function closeMenu(){sheet.hidden=true;paused=false;wipeArm=0;last=performance.now()}
+function closeMenu(){sheet.hidden=true;paused=false;wipeArm=0;last=performance.now();try{fit();render()}catch(e){oops(e)}}
 function wipe(){
   S.money=0;S.owned={mini:1};S.sel='mini';S.zone='des';S.unl={des:1};S.done={};S.act=null;S.trucks=0;
   for(const k in S.up)S.up[k]=0;
@@ -1608,20 +1609,26 @@ genWorld(S.zone);
 placeMachine();
 cam=clamp(M.x-VW/2,0,W-VW);
 let last=performance.now(),acc=0,saveT=0;
+let errShown='';
+function oops(e){const m=String(e&&e.message||e);if(m!==errShown){errShown=m;try{toast('Error: '+m.slice(0,60))}catch(_){}}}
 function frame(now){
-  const dt=Math.min(.1,(now-last)/1000);last=now;
-  if(!paused){
-    acc+=dt;
-    let n=0;
-    while(acc>=1/60&&n<3){update();acc-=1/60;n++}
-    if(n===3)acc=0;
-    saveT+=dt;if(saveT>6){saveT=0;save()}
-  }else Snd.engine(-1,'',M.kind);
-  render();hud();
   requestAnimationFrame(frame);
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  try{
+    if(!paused){
+      acc+=dt;
+      let n=0;
+      while(acc>=1/60&&n<3){update();acc-=1/60;n++}
+      if(n===3)acc=0;
+      saveT+=dt;if(saveT>6){saveT=0;save()}
+    }else{try{Snd.engine(-1,'',M.kind)}catch(_){}}
+  }catch(e){oops(e)}
+  try{render()}catch(e){oops(e)}
+  try{hud()}catch(e){oops(e)}
 }
 if(document.fonts&&document.fonts.load){document.fonts.load('8px Silkscreen').catch(()=>{})}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else last=performance.now()});
+for(const ev of['pageshow','orientationchange','resize'])window.addEventListener(ev,()=>{fit();last=performance.now()});
 requestAnimationFrame(frame);
 </script>
 </body></html>
